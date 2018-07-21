@@ -2,11 +2,11 @@ import React, {Component} from 'react';
 import Book from './Book';
 import * as BooksAPI from './BooksAPI'
 import { Link } from 'react-router-dom';
-
+import ShelfChanger from './ShelfChanger'
 class SearchBooks extends React.Component {
   state = {
   	query: '',
-  	books: []
+  	searchedBooks: []
   }
 
   updateQuery = (query) => {
@@ -14,11 +14,24 @@ class SearchBooks extends React.Component {
   }
 
   render() {
-  	const { query, books } = this.state;
-  	const { onChangeShelf } = this.props;
+  	const { query, searchedBooks} = this.state;
+  	const { books, onChangeShelf } = this.props;
 
     if(query) {
-      BooksAPI.search(query, 20).then(books =>  this.setState({ books }))
+      BooksAPI.search(query, 20).then(results => {
+        if(results.length) {
+         
+          results = results.map(result => {
+           result.shelf = "none";
+            return result;
+          })
+         results.forEach(result => books.map(book =>{
+           if(result.id === book.id) result.shelf = book.shelf;
+         }))
+        }
+
+        this.setState({searchedBooks: results})    
+      })
     }
 
   	return(
@@ -26,8 +39,7 @@ class SearchBooks extends React.Component {
 	    <div className="search-books-bar">
 	      <Link 
 	        to="/"
-	        className="close-search"
-	        onClick={() => this.setState({ showSearchPage: false })}>Close     
+	        className="close-search">Close      
 	      </Link>
 
 	      <div className="search-books-input-wrapper">
@@ -36,11 +48,11 @@ class SearchBooks extends React.Component {
 	    </div>
 
 	    <div className="search-books-results">
-	      {(books.length && query) ? <ol className="books-grid">
-            { books.map(book => ( 
+	      {(searchedBooks.length && query) ? <ol className="books-grid">
+            { searchedBooks.map(book => ( 
               <Book
                 book={ book }
-                books={ books }
+                books={ searchedBooks}
                 onChangeShelf={ onChangeShelf }
               />
 	        ))}
